@@ -1,0 +1,15 @@
+[package]
+name = "dmg"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+command-rs = {path = "../command-rs",features=["output"]}
+kiruna = {path = "../kiruna",features=["stream_with_dispatch"]}
+core-foundationr = {path = "../core-foundationr"}
+
+[dev-dependencies]
+kiruna = {path = "../kiruna", features=["test"]}
+dispatchr = {path = "../dispatchr"}
