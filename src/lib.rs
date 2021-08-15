@@ -1,24 +1,22 @@
 use std::path::{Path, PathBuf};
-use kiruna::io::stream::OSReadOptions;
 use core_foundationr::{CFData, CFPropertyList, CFTypeBehavior, StrongCell, CFString, CFArray, CFDictionary};
 use std::ffi::c_void;
 
 #[non_exhaustive]
 #[derive(Debug)]
-pub enum DMGError {
+pub enum Error {
     IOError(std::io::Error),
     CFError(StrongCell<core_foundationr::CFError>)
 }
 
 
-pub async fn mount(path: &Path,read_options: OSReadOptions) -> Result<PathBuf,DMGError> {
-    let output = command_rs::Command::new("hdiutil").arg("mount").arg(path.as_os_str()).arg("-plist").output(read_options)
-        .await.map_err(|e| DMGError::IOError(e))?;
-    //we copy the string here to bring it into rust ownership.  Should not be a big deal
+pub async fn mount(path: &Path,priority: kiruna::Priority) -> Result<PathBuf, Error> {
+    let output = command_rs::Command::new("hdiutil").arg("mount").arg(path.as_os_str()).arg("-plist").output(priority)
+        .await.map_err(|e| Error::IOError(e))?;
     let dispatch_data = output.stdout.as_dispatch_data();
     //dispatch_data is bridged with cfdata
     let cfdata = unsafe{ CFData::from_ref(&*(dispatch_data as *const _ as *const c_void)) };
-    let plist = CFPropertyList::from_data(cfdata).map_err(|e| DMGError::CFError(e))?;
+    let plist = CFPropertyList::from_data(cfdata).map_err(|e| Error::CFError(e))?;
     let dictionary: StrongCell<CFDictionary> = plist.cast_checked();
     //There are, I think, varoius extra copies in here for things that could be static strings etc
     let strong_str = CFString::from_str("system-entities");
@@ -37,8 +35,7 @@ pub async fn mount(path: &Path,read_options: OSReadOptions) -> Result<PathBuf,DM
 
 #[test] fn test() {
     use kiruna::test::test_await;
-    let read_options = kiruna::io::stream::OSReadOptions::new(dispatchr::queue::global(dispatchr::qos::QoS::UserInitiated));
-    let f = mount(Path::new("testdata/test_compressed.dmg"),read_options);
+    let f = mount(Path::new("testdata/test_compressed.dmg"),kiruna::Priority::Testing);
     let result = test_await(f, std::time::Duration::from_secs(10));
     let result2 = result.unwrap();
     assert_eq!(result2.to_str().unwrap(), "/Volumes/test");

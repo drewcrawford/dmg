@@ -12,4 +12,3 @@ core-foundationr = {path = "../core-foundationr"}
 
 [dev-dependencies]
 kiruna = {path = "../kiruna", features=["test"]}
-dispatchr = {path = "../dispatchr"}
