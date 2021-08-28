@@ -5,14 +5,14 @@ use std::ffi::c_void;
 #[non_exhaustive]
 #[derive(Debug)]
 pub enum Error {
-    IOError(std::io::Error),
+    CommandRSError(command_rs::Error),
     CFError(StrongCell<core_foundationr::CFError>)
 }
 
 
 pub async fn mount(path: &Path,priority: kiruna::Priority) -> Result<PathBuf, Error> {
     let output = command_rs::Command::new("hdiutil").arg("mount").arg(path.as_os_str()).arg("-plist").output(priority)
-        .await.map_err(|e| Error::IOError(e))?;
+        .await.map_err(|e| Error::CommandRSError(e))?;
     let dispatch_data = output.stdout.as_dispatch_data();
     //dispatch_data is bridged with cfdata
     let cfdata = unsafe{ CFData::from_ref(&*(dispatch_data as *const _ as *const c_void)) };
