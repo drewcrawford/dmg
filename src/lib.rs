@@ -1,15 +1,44 @@
+/*!
+# dmg
+
+dmg is an async Rust library for macOS that mounts a DMG file.  It is useful for sysadmin tasks.
+
+dmg has minimal dependencies and is designed for use in any async runtime.  In particular, it is tested with
+[kiruna](https://github.com/drewcrawford/kiruna).
+
+# Example
+```
+async fn example() -> Result<(),Box<dyn std::error::Error>> {
+    let result_path = dmg::mount(std::path::Path::new("testdata/test_compressed.dmg"), kiruna::Priority::UserWaiting).await?;
+    println!("result_path {:?}",result_path);
+    Ok(())
+}
+```
+ */
 use std::path::{Path, PathBuf};
 use core_foundationr::{CFData, CFPropertyList, CFTypeBehavior, StrongCell, CFString, CFArray, CFDictionary};
 use std::ffi::c_void;
 
 #[non_exhaustive]
-#[derive(Debug)]
+#[derive(Debug,thiserror::Error)]
 pub enum Error {
-    CommandRSError(command_rs::Error),
-    CFError(StrongCell<core_foundationr::CFError>)
+    #[error("Problem executing command {0}")]
+    CommandRSError(#[from] command_rs::Error),
+    #[error("Problem from Core Foundation {0}")]
+    CFError(#[from] StrongCell<core_foundationr::CFError>)
 }
 
+/**
+Mounts a dmg file.
 
+# Example
+```
+async fn example() -> Result<(),Box<dyn std::error::Error>> {
+    let result_path = dmg::mount(std::path::Path::new("testdata/test_compressed.dmg"), kiruna::Priority::UserWaiting).await?;
+    println!("result_path {:?}",result_path);
+    Ok(())
+};
+*/
 pub async fn mount(path: &Path,priority: kiruna::Priority) -> Result<PathBuf, Error> {
     let output = command_rs::Command::new("hdiutil").arg("mount").arg(path.as_os_str()).arg("-plist").output(priority)
         .await.map_err(|e| Error::CommandRSError(e))?;

@@ -6,9 +6,10 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-command-rs = {path = "../command-rs",features=["output"]}
-kiruna = {path = "../kiruna",features=["stream_with_dispatch"]}
-core-foundationr = {path = "../core-foundationr"}
+command-rs = {git = "https://github.com/drewcrawford/command-rs",features=["output"]}
+kiruna = {git = "https://github.com/drewcrawford/kiruna" }
+core-foundationr = {git = "https://github.com/drewcrawford/core-foundationr"}
+thiserror = "~1"
 
 [dev-dependencies]
-kiruna = {path = "../kiruna", features=["test"]}
+kiruna = {git = "https://github.com/drewcrawford/kiruna", features=["test"]}
